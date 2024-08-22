@@ -1,9 +1,9 @@
 # Sample of application to buy Long and Short position orders by using solana coin.
 
 # Before the start Do the next:
-npm i 
-npx knex migrate:latest
-npx knex seed:run
+npm i  <br/>
+npx knex migrate:latest <br/>
+npx knex seed:run <br/>
 Fill .env file, examples are inside .env.example
 
 # To start unit tests
