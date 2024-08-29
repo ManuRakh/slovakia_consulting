@@ -8,7 +8,7 @@ const validateOpenPosition = [
     .isString()
     .withMessage("Position type must be a string"),
 
-  body("asset_id").isUUID().withMessage("Asset ID must be a valid UUID"),
+  body("asset_id").isString().withMessage("Asset ID must be a valid UUID"),
   body("user_id").isUUID().withMessage("User ID must be a valid UUID"),
   (req, res, next) => {
     const errors = validationResult(req);

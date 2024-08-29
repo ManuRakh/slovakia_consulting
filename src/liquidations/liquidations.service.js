@@ -22,18 +22,22 @@ async function liquidateShorts(assetId, requiredAmount, client) {
       requiredAmount - totalAmountLiquidated
     );
 
-    const { success, solAmount } = await raydiumService.sellTokens(
-      assetId,
+    const { success, tokenAmount } = await raydiumService.sellTokens(
       amountToLiquidate
     );
+
     if (!success) {
       throw new Error(RaydiumSellFailed);
     }
 
-    await positionModel.updateClientBalance(position.userId, solAmount, client);
+    await positionModel.updateClientBalance(
+      position.userId,
+      -tokenAmount,
+      client
+    );
     await positionModel.updatePlatformBalance(
-      amountToLiquidate,
-      solAmount,
+      -amountToLiquidate,
+      -tokenAmount,
       client
     );
 
@@ -43,7 +47,7 @@ async function liquidateShorts(assetId, requiredAmount, client) {
       transactionType: transactionTypes.liquidation,
       positionType: positionTypes.short,
       amountToken: amountToLiquidate,
-      quoteAmount: solAmount,
+      quoteAmount: tokenAmount,
       status: "successful",
       dexTransactionId: "raydium789",
       transaction_id: generateUUID(),

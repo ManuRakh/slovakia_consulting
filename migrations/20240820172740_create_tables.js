@@ -15,7 +15,7 @@ exports.up = function (knex) {
     .createTable("transactions", (table) => {
       table.uuid("transaction_id").primary();
       table.uuid("user_id").references("client_id").inTable("clients");
-      table.uuid("asset_id");
+      table.string("asset_id");
       table.enu("transaction_type", ["open_position", "close_position"]);
       table.enu("position_type", ["long", "short"]);
       table.decimal("amount_token", 18, 8);
@@ -27,7 +27,7 @@ exports.up = function (knex) {
       table.decimal("platform_balance_after", 18, 8);
     })
     .createTable("assets", (table) => {
-      table.uuid("asset_id").primary();
+      table.string("asset_id").primary();
       table.string("ticker").notNullable();
       table.string("contract_address").notNullable();
     });

@@ -21,12 +21,12 @@ exports.seed = async function (knex) {
 
   await knex("assets").insert([
     {
-      asset_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      asset_id: "Es9vMFrzaCERt95C1hYf1deDLUcb5hfb1yC5T3TCSYFy",
       ticker: "TOKEN1",
       contract_address: "0x1234567890abcdef",
     },
     {
-      asset_id: "f0e1d2c3-b4a5-6789-0abc-def123456789",
+      asset_id: "Es9vMFrzaCERt95C1hYf1deDLUcb5hfb1yC5T3TCSYFy",
       ticker: "TOKEN2",
       contract_address: "0xfedcba0987654321",
     },

@@ -1,5 +1,6 @@
 const positionModel = require("./positionModel");
 const raydiumService = require("../raydium/raydiumService");
+
 const pool = require("../db/index");
 const {
   NotEnoughForOpen,
@@ -12,12 +13,12 @@ const { liquidateShorts } = require("../liquidations/liquidations.service");
 const { generateUUID } = require("../utils/helpers");
 
 class PositionService {
-  async openLongPosition(userId, assetId, amountSol) {
+  async openLongPosition(userId, assetMintAddress, amountSol) {
     const client = await pool.connect();
 
     try {
       await client.query("BEGIN");
-
+      console.log("started", userId, assetMintAddress, amountSol);
       const clientBalance = await positionModel.getClientBalance(
         userId,
         client
@@ -29,9 +30,9 @@ class PositionService {
       await positionModel.deductClientBalance(userId, amountSol, client);
 
       const { success, tokenAmount } = await raydiumService.buyTokens(
-        assetId,
         amountSol
       );
+
       if (!success) {
         throw new Error(RaydiumPurchaseFailed);
       }
@@ -40,7 +41,7 @@ class PositionService {
 
       const transaction = {
         userId,
-        assetId,
+        assetMintAddress,
         transactionType: transactionTypes.openPosition,
         positionType: positionTypes.long,
         amountToken: tokenAmount,
@@ -56,13 +57,14 @@ class PositionService {
       return transaction;
     } catch (error) {
       await client.query("ROLLBACK");
+      console.log({ error });
       throw error;
     } finally {
       client.release();
     }
   }
 
-  async closeLongPosition(userId, assetId, amountToken) {
+  async closeLongPosition(userId, assetMintAddress, amountToken) {
     const client = await pool.connect();
 
     try {
@@ -70,7 +72,7 @@ class PositionService {
 
       const openTokens = await positionModel.getOpenLongPosition(
         userId,
-        assetId,
+        assetMintAddress,
         client
       );
       if (amountToken > openTokens) {
@@ -78,39 +80,38 @@ class PositionService {
       }
 
       const openShorts = await positionModel.getOpenShortPositions(
-        assetId,
+        assetMintAddress,
         client
       );
       if (amountToken > openTokens - openShorts) {
         await liquidateShorts(
-          assetId,
+          assetMintAddress,
           amountToken - (openTokens - openShorts),
           client
         );
       }
 
-      const { success, solAmount } = await raydiumService.sellTokens(
-        assetId,
+      const { success, tokenAmount } = await raydiumService.sellTokens(
         amountToken
       );
       if (!success) {
         throw new Error(RaydiumSellFailed);
       }
 
-      await positionModel.updateClientBalance(userId, solAmount, client);
+      await positionModel.updateClientBalance(userId, tokenAmount, client);
       await positionModel.updatePlatformBalance(
         -amountToken,
-        -solAmount,
+        -tokenAmount,
         client
       );
 
       const transaction = {
         userId,
-        assetId,
+        assetMintAddress,
         transactionType: transactionTypes.closePosition,
         positionType: positionTypes.long,
         amountToken,
-        quoteAmount: solAmount,
+        quoteAmount: tokenAmount,
         status: "successful",
         dexTransactionId: "raydium456",
         transaction_id: generateUUID(),
@@ -127,7 +128,7 @@ class PositionService {
       client.release();
     }
   }
-  async openShortPosition(userId, assetId, amountToken) {
+  async openShortPosition(userId, assetMintAddress, amountToken) {
     const client = await pool.connect();
 
     try {
@@ -147,7 +148,7 @@ class PositionService {
 
       const transaction = {
         userId,
-        assetId,
+        assetMintAddress,
         transactionType: transactionTypes.openPosition,
         positionType: positionTypes.short,
         amountToken,
@@ -169,22 +170,21 @@ class PositionService {
     }
   }
 
-  async closeShortPosition(userId, assetId, amountToken) {
+  async closeShortPosition(userId, assetMintAddress, amountToken) {
     const client = await pool.connect();
 
     try {
       await client.query("BEGIN");
 
       const openTokens = await positionModel.getOpenShortPositions(
-        assetId,
+        assetMintAddress,
         client
       );
       if (amountToken > openTokens) {
         throw new Error(CantCloseShort);
       }
 
-      const { success, solAmount } = await raydiumService.sellTokens(
-        assetId,
+      const { success, tokenAmount } = await raydiumService.sellTokens(
         amountToken
       );
       if (!success) {
@@ -196,7 +196,7 @@ class PositionService {
 
       const transaction = {
         userId,
-        assetId,
+        assetMintAddress,
         transactionType: transactionTypes.closePosition,
         positionType: positionTypes.short,
         amountToken,

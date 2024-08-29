@@ -95,7 +95,6 @@ describe("PositionService", () => {
       positionModel.getOpenShortPositions.mockResolvedValue(0);
       raydiumService.sellTokens.mockResolvedValue({
         success: true,
-        solAmount: 45,
       });
       client.query.mockResolvedValueOnce(); // updateClientBalance
       client.query.mockResolvedValueOnce(); // updatePlatformBalance
